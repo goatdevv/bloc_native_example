@@ -1,3 +1,4 @@
+import 'package:bloc_application/domain/container_bloc.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -7,61 +8,81 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Bloc Native'),
+        ),
+        body: const BodyContent(),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-  final String title;
+class BodyContent extends StatefulWidget {
+  const BodyContent({Key? key}) : super(key: key);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<BodyContent> createState() => _BodyContentState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+class _BodyContentState extends State<BodyContent> {
+  // Получение блока для передачи эвентов и запуска функционала 
+  ContainerBloc bloc = ContainerBloc();
+  
+  @override
+  void dispose(){
+    bloc.dispose();
+    super.dispose();
   }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const SizedBox(),
+          StreamBuilder<Color>(
+            stream: bloc.outputStateStream,
+            initialData: Colors.blue,
+            builder: (context, snapshot) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                color: snapshot.data,
+                width: 200,
+                height: 200,
+              );
+            }
+          ),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              HomePageBtn(btnAction: () {
+                bloc.inputEventSink.add(ContainerEvents.colorRedEvent);
+              }, btnColor: Colors.red),
+              HomePageBtn(btnAction: () {bloc.inputEventSink.add(ContainerEvents.colorRandomEvent);}, btnColor: Colors.yellow),
+              HomePageBtn(btnAction: () {bloc.inputEventSink.add(ContainerEvents.colorGreenEvent);}, btnColor: Colors.green),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class HomePageBtn extends StatelessWidget {
+  final Function btnAction;
+  final Color btnColor;
+  const HomePageBtn({Key? key, required this.btnAction,  this.btnColor = Colors.red})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+    return FloatingActionButton(
+      onPressed: ()=>btnAction() ,
+      backgroundColor: btnColor,
     );
   }
 }
